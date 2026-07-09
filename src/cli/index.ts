@@ -18,6 +18,7 @@ interface TrimCliOptions {
   readonly focus: string;
   readonly hops: string;
   readonly output?: string;
+  readonly list?: boolean;
 }
 
 // Single source of truth for the version: package.json sits two levels above
@@ -41,11 +42,15 @@ program
   .requiredOption('-f, --focus <query>', 'natural-language task to focus on')
   .option('--hops <n>', 'dependency-graph traversal depth from seeds', '2')
   .option('-o, --output <file>', 'write the bundle to a file instead of stdout')
+  .option('--list', 'print only the kept file paths (one per line), no bundle')
   .action(async (targetPath: string, options: TrimCliOptions) => {
     try {
       const hops = Number.parseInt(options.hops, 10);
       if (!Number.isFinite(hops) || hops < 0) {
         throw new Error(`--hops must be a non-negative integer (got "${options.hops}")`);
+      }
+      if (options.list === true && options.output !== undefined) {
+        throw new Error('--list and --output cannot be combined (the list goes to stdout)');
       }
 
       const root = path.resolve(targetPath);
@@ -55,6 +60,15 @@ program
       if (result.totalFiles === 0) {
         process.stderr.write(`\n  contextdiet: no source files found under ${root}\n\n`);
         process.exitCode = 1;
+        return;
+      }
+
+      if (options.list === true) {
+        // Preview mode: just the survivors, still one clean stream on stdout.
+        for (const kept of result.keptFiles) {
+          process.stdout.write(`${kept}\n`);
+        }
+        printDashboard(result, null);
         return;
       }
 

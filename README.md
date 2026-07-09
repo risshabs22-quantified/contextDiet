@@ -90,6 +90,7 @@ contextdiet trim ./src --focus "add rate limiting to the login route"
 | `-f, --focus <query>` | describe your task in normal words. this picks the seeds. | *(required)* |
 | `--hops <n>` | how many dependency-graph jumps out from the seeds | `2` |
 | `-o, --output <file>` | write the bundle to a file instead of stdout | *(stdout)* |
+| `--list` | dry run: print just the kept file paths, one per line, no bundle. good for checking what survives before you send it anywhere | off |
 
 > bundle → stdout, dashboard → stderr. so `contextdiet trim … > bundle.md` gives you a clean file with zero dashboard noise in it. you're welcome.
 

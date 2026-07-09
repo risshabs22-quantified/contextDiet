@@ -135,6 +135,32 @@ describe('contextdiet CLI — end to end', () => {
     }
   }, 30_000);
 
+  it('--list prints only kept file paths, no bundle content', async () => {
+    const { stdout, stderr, code } = await runCli([
+      'trim', FIXTURE, '--focus', 'verify the token signature', '--hops', '3', '--list',
+    ]);
+    expect(code).toBe(0);
+
+    expect(stdout).not.toContain('--- START FILE:');
+    const lines = stdout.trim().split('\n');
+    expect(lines).toContain('utils/jwtUtils.ts');
+    for (const line of lines) {
+      expect(path.isAbsolute(line)).toBe(false);
+      expect(line.endsWith('.ts')).toBe(true);
+    }
+
+    // Dashboard still lands on stderr in list mode.
+    expect(stderr).toContain('ContextDiet');
+  }, 30_000);
+
+  it('--list refuses to combine with --output', async () => {
+    const { stderr, code } = await runCli([
+      'trim', FIXTURE, '--focus', 'jwt', '--list', '-o', 'nope.md',
+    ]);
+    expect(code).not.toBe(0);
+    expect(stderr).toContain('--list and --output');
+  }, 30_000);
+
   it('reports the package.json version (no drift between the two)', async () => {
     const pkg = JSON.parse(
       await fs.readFile(path.join(REPO, 'package.json'), 'utf8'),
