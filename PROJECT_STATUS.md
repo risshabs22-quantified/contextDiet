@@ -11,8 +11,8 @@
 
 - **Project:** ContextDiet — AST-based token optimizer for AI agents
 - **Repo root (absolute):** `/Users/risshabs.22/Documents/GitHub/contextDiet`
-- **Last major update:** 2026-07-08 — E2E harness hardened (ADR-017); **full suite green, MVP unified & release-ready**
-- **Current stage:** **SHIP IT.** MVP complete & unified — 123/123 tests green (incl. hermetic E2E CLI), 0 type errors, symbol-level precision at 99.0% reduction. Ready for git deployment.
+- **Last major update:** 2026-07-08 — **Ultracode final audit** (20 agents, 5 dimensions, adversarial verify): 15/15 confirmed findings fixed; npm tarball verified by a real install
+- **Current stage:** **LAUNCH-READY.** 123/123 tests, 0 type errors, tarball smoke-tested end-to-end (`npm pack` → install → run), docs 100% ledger-backed. Awaiting `git push`.
 
 ---
 
@@ -42,6 +42,12 @@ discover → parse → resolve graph → rank(focus) → select → prune → bu
 were chosen (Ranker interface) or *how* files were parsed (Parser interface).
 That indirection is the entire extensibility story.
 
+**Proven efficiency (measured, §6):** **99.0%** token reduction on `./src`
+(narrow focus), **98.9%** on the monolith narrow run, **68.2%** on a broad
+query — compression scales with how precisely the focus maps to code.
+**Direction canon:** the selector keeps what matched code *depends on*, never
+what merely calls into it — all docs/marketing must use this framing (ADR-019).
+
 ---
 
 ## 2. Tech Stack & Absolute Path Dependencies
@@ -54,7 +60,7 @@ That indirection is the entire extensibility story.
 | CLI framework | `commander` (`^15`) |
 | Test runner | `vitest` (`^4`) |
 | Module resolution | `NodeNext` (relative imports use explicit `.js`) |
-| Distribution (planned) | `npm` / `npx contextdiet` |
+| Distribution | npm tarball **verified**: `files: ["dist","bin"]` allowlist, `prepublishOnly` gate (typecheck+test+build), `exports`/`types` for library use; real tarball-install smoke test green |
 
 **Absolute path dependencies**
 
@@ -148,14 +154,26 @@ containing only the declarations relevant to `--focus` plus their required impor
       Fixes the QA-reported 3/4 integration failures in `tsx`-less environments.
 - [x] Vitest suite: **123/123 passing** (9 files); `tsc` typecheck clean; live CLI verified;
       integration suite verified green even with `tsx` absent (the QA condition)
+- [x] **Task 9.0 — Ultracode launch audit** (5 dimensions × adversarial verification;
+      20 agents; **15/15 confirmed findings → all FIXED**):
+      * npm packaging (ADR-018): `files` allowlist, `prepublishOnly` gate, library
+        `exports`/`types`, repository/homepage/bugs/author — **verified by installing
+        the real tarball in a clean dir and running the binary**
+      * README + LAUNCH_COPY rewritten to **ledger-backed numbers only** and true
+        dependency-direction examples (ADR-019); false "zero-dependency" and
+        fabricated 128,400/11,900/90.7% figures removed
+      * hygiene: stale `tsx` comment in bin shim fixed; 3 stale `.gitkeep` removed
+      * clean dimensions: CLI-docs mechanics ✓ (all flags/defaults/scripts match
+        code), test integrity ✓ (per-file `it()` census = exactly 123; no
+        `.only`/`.skip`; hermetic harness confirmed)
 
 ### 🔧 In-Progress
-- _(none)_
+- _(none — nothing blocks launch)_
 
-### ⏳ Pending
-- [ ] **Future** — `EmbeddingRanker` (better seed recall — lexical seeds are
-      substring-based; see the "verification" vs `verify` gap noted in ADR-016);
-      multi-language; watch mode
+### 🗺 Post-launch roadmap (intentionally NOT marked complete — not yet built)
+- [ ] `EmbeddingRanker` (better seed recall — lexical seeds are substring-based;
+      see the "verification" vs `verify` gap noted in ADR-016)
+- [ ] Multi-language parsing (`--lang`); watch mode; `--json` metrics output
 
 ---
 
@@ -323,6 +341,36 @@ benchmark and all unit tests. Fix: `tests/integration/cli.test.ts` now builds
 exact artifact `npx contextdiet` runs). **Rejected:** in-process import of the CLI
 — faster, but wouldn't exercise the shipped bin/argv path a user actually hits.
 
+**ADR-018 — npm packaging: `files` allowlist + `prepublishOnly` gate + library exports.** *(2026-07-08)*
+The ultracode audit found the published package would have been **broken for every
+installer**: with no `files` field, npm falls back to `.gitignore` as its ignore
+list, and `.gitignore` excludes `dist/` — so the tarball shipped tests, fixtures,
+uncompiled `src/`, and internal docs, but NOT the compiled code the bin shim
+imports (`ERR_MODULE_NOT_FOUND` on first run). Fix: `"files": ["dist", "bin"]`
+(one allowlist excludes all cruft and includes the artifact), `"prepublishOnly":
+"npm run typecheck && npm test && npm run build"` (publishing always ships a
+fresh, verified build), `main`/`types`/`exports` → `dist/core/pipeline.js` (the
+README markets a library surface; `import { trim } from 'contextdiet'` now works),
+plus `repository`/`homepage`/`bugs`/`author`. **Verified end-to-end**: `npm pack`
+→ install the real tarball into a clean directory → run the installed binary →
+correct bundle + dashboard. **Rejected:** `.npmignore` — a denylist that silently
+drifts; the allowlist is the standard, fail-safe fix.
+
+**ADR-019 — Truth-in-marketing: every public number must exist in §6; dependency-direction canon.** *(2026-07-08)*
+The audit (20 agents; 15/15 findings adversarially confirmed) caught the launch
+docs contradicting the shipped product: a fabricated benchmark presented as "the
+numbers on that run" (128,400 → 11,900 tok, 90.7% — no such run exists), flat
+"90%" headlines (real range: 68.2–99.0% by focus breadth), a false
+"zero-dependency-at-runtime" claim (two runtime deps: `@ast-grep/napi`,
+`commander`), and — worst — a kept-chain story (`index → auth → authMiddleware →
+jwtUtils → crypto`) that runs **backwards**: our own tests assert dependents are
+NOT kept. All copy was rewritten to measured runs (68.2% broad / 98.9% & 99.0%
+narrow) and to the canonical framing: *ContextDiet keeps what matched code
+depends on, never what calls into it.* **Standing policy:** no number ships in
+README/LAUNCH_COPY unless it has a row in §6; direction language follows the
+canon. The middleware example is honest because the middleware *lexically
+matches* a token-focused query and seeds itself — not because callers are traversed.
+
 ---
 
 ## 6. Efficiency Metrics Ledger
@@ -335,6 +383,8 @@ concatenation of all source files):
 | Date | Selection | Root | Focus | `--hops` | Baseline tok | Pruned tok | Token Red. % | ≥80%? | Kept |
 |------|-----------|------|-------|:---:|---:|---:|:---:|:---:|:---:|
 | 2026-07-08 | **symbol** | `contextdiet/src` | "malformed syntax ParseError" | 2 | 30,472 | 302 | **99.0%** | ✅ **MET** | 2/14 |
+| 2026-07-08 | **symbol** | `monolith-auth-app/src` | "Fix JWT verification" (narrow) | 3 | 9,386 | 100 | **98.9%** | ✅ **MET** | 1/8 |
+| 2026-07-08 | **symbol** | `monolith-auth-app/src` | "verify the token signature" (broad) | 3 | 9,386 | 2,985 | 68.2% | ⚠️ broad | 3/8 |
 | 2026-07-08 | whole-file | `contextdiet/src` | "malformed syntax ParseError" | 1 | 27,797 | 6,408 | 77.0% | ⚠️ | 2/13 |
 | 2026-07-08 | whole-file | `monolith-auth-app/src` | "Fix the JWT verification bug" | 3 | 9,386 | 2,773 | 70.5% | ⚠️ | 2/8 |
 | 2026-07-08 | whole-file | `contextdiet/src` | "resolve the dependency graph …" (broad) | 3 | 27,797 | 13,663 | 50.9% | ⚠️ | 9/13 |
@@ -404,4 +454,5 @@ Timestamped session checkpoints appended by `.claude/hooks/update-status.sh`.
 - 2026-07-08T22:58:46Z — session checkpoint recorded
 - 2026-07-08T23:08:22Z — session checkpoint recorded
 - 2026-07-09T02:39:59Z — session checkpoint recorded
+- 2026-07-09T03:31:53Z — session checkpoint recorded
 <!-- AUTO-LOG:END -->

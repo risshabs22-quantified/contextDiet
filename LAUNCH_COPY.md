@@ -1,6 +1,6 @@
 # ContextDiet — Launch Copy
 
-Ready-to-post pitches for launch day. Swap in real benchmark numbers before posting, keep the technical claims honest, and reply fast to the first wave of comments — early engagement is what drives ranking on every one of these platforms.
+Ready-to-post pitches for launch day. Every benchmark number below is a **real measured run** logged in `PROJECT_STATUS.md` §6 (Efficiency Metrics Ledger) — keep it that way if you edit, and reply fast to the first wave of comments — early engagement is what drives ranking on every one of these platforms.
 
 > Repo: https://github.com/risshabs22-quantified/contextDiet
 
@@ -11,7 +11,7 @@ Ready-to-post pitches for launch day. Swap in real benchmark numbers before post
 **Title:**
 
 ```
-Show HN: ContextDiet – AST graph traversal that cuts AI agent token costs by 90%
+Show HN: ContextDiet – AST graph traversal that cuts AI agent token costs (up to 99% measured)
 ```
 
 **Body:**
@@ -26,17 +26,17 @@ The pipeline is five pure stages:
 
 1. **Parser** — extracts imports and top-level symbols via a real AST (ast-grep), not regex. It surfaces a catchable `ParseError` instead of silently returning a half-wrong tree.
 2. **Dependency Graph** — resolves the import/export edges, including re-exports and aliases, and is cycle-safe (`a → b → a` won't loop).
-3. **Lexical Seed Ranker** — turns your `--focus "Fix JWT verification"` string into weighted seed nodes. Stop-word stripping + camelCase splitting + overlap scoring. Fully local, deterministic, $0.
-4. **AST Pruner** — traverses the graph from the seeds and keeps only reachable declarations. Everything unreachable is sliced.
+3. **Lexical Seed Ranker** — turns your `--focus "verify the token signature"` string into weighted seed nodes. Stop-word stripping + camelCase splitting + overlap scoring. Fully local, deterministic, $0.
+4. **Selector + AST Pruner** — walks the dependency graph from the seeds (symbol-level reference closure) and keeps only reachable declarations, re-emitted verbatim. Everything unreachable is sliced.
 5. **Markdown Bundler** — serializes the survivors into a dense, delimiter-fenced stream, plus a token-reduction report.
 
 The thing I care most about: it's **zero network overhead**. No embeddings API, no remote reranker, no telemetry. It runs entirely on your machine and produces byte-identical output every run, which matters if you're wiring it into CI or a deterministic agent loop.
 
 ```
-npx contextdiet trim ./src --focus "Fix JWT verification"
+npx contextdiet trim ./src --focus "verify the token signature"
 ```
 
-On our monolith-auth fixture, focusing on the JWT path follows `index → auth → authMiddleware → jwtUtils → crypto` and drops billing/PDF/analytics entirely — ~90% fewer tokens than dumping the repo.
+Measured numbers: on our monolith-auth fixture, that focus keeps the `authMiddleware → jwtUtils → crypto` dependency chain (3 of 8 files) and drops the entry point, billing, PDF, and analytics entirely — 9,386 → 2,985 estimated tokens (**68.2%**). A narrow, single-symbol focus on ContextDiet's own repo measures **99.0%** (30,472 → 302). One design choice worth knowing: the selector follows *dependencies* from the matched symbols, never callers — that's what keeps bundles small.
 
 It's MIT, TypeScript (strict), and the whole engine is built as independently testable modules with a big Vitest suite. I'd love feedback on the ranker heuristic and on which languages to parse next (tree-sitter/SWC backends are designed to slot in behind the existing interfaces).
 
@@ -53,7 +53,7 @@ Repo: https://github.com/risshabs22-quantified/contextDiet
 **Title:**
 
 ```
-I built a zero-dependency-at-runtime CLI that prunes a TS codebase down to just the code paths your AI agent needs (AST graph traversal, strict TS, MIT)
+I built a fully-offline TypeScript CLI that prunes a codebase down to just the code paths your AI agent needs (AST graph traversal, strict TS, MIT)
 ```
 
 **Body:**
@@ -65,9 +65,9 @@ ContextDiet is a TypeScript CLI that does it properly:
 - **Real AST parsing** (ast-grep) → imports + symbols, with a catchable `ParseError` instead of silent partial trees.
 - **A dependency graph** that resolves re-exports/aliases and is cycle-safe.
 - **A lexical ranker** that maps your `--focus` string to seed symbols (stop-word stripping + camelCase tokenization + scoring), deterministic and 100% local.
-- **A pruner** that keeps only graph-reachable code, and a **bundler** that emits a dense Markdown stream + a token-reduction report.
+- **A selector + pruner** that keep only graph-reachable code (symbol-level reference closure), and a **bundler** that emits a dense Markdown stream + a token-reduction report.
 
-Stack notes for this sub: strict `tsconfig` (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`), pure ESM (NodeNext), Node ≥20, Vitest, GitHub Actions CI on Node 20 + 22. Every pipeline stage is a pure module behind an interface, so swapping the AST backend later doesn't touch callers.
+Stack notes for this sub: two runtime deps (`@ast-grep/napi` native bindings + `commander`), strict `tsconfig` (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`), pure ESM (NodeNext), Node ≥20, Vitest, GitHub Actions CI on Node 20 + 22. Every pipeline stage is a pure module behind an interface, so swapping the AST backend later doesn't touch callers.
 
 ```
 npx contextdiet trim ./src --focus "add rate limiting to the login route"
@@ -87,7 +87,7 @@ Stop stuffing your whole repo into context. ContextDiet does AST graph traversal
 
 If you're running local models, context window is your scarcest resource — you don't have a 200k window to waste on dead code, and you *definitely* don't want to round-trip your source to some embedding API just to build a prompt.
 
-ContextDiet is fully offline. Given a task like `--focus "Fix JWT verification"`, it:
+ContextDiet is fully offline. Given a task like `--focus "verify the token signature"`, it:
 
 1. Parses your code into an AST,
 2. Builds a dependency graph,
@@ -95,10 +95,10 @@ ContextDiet is fully offline. Given a task like `--focus "Fix JWT verification"`
 4. Traverses the graph and keeps only reachable code,
 5. Emits a dense Markdown bundle sized to fit a small context window.
 
-No network, no telemetry, no API keys. On a realistic backend it drops ~90% of tokens by slicing everything not reachable from the code path you're working on — which means more of your precious local context goes to *relevant* code.
+No network, no telemetry, no API keys. Measured on our auth-monolith fixture it cut **68%** of tokens on a broad query and **99%** on a narrow one — everything not structurally reachable from the code path you're working on gets sliced, which means more of your precious local context goes to *relevant* code.
 
 ```
-npx contextdiet trim ./src --focus "Fix JWT verification"
+npx contextdiet trim ./src --focus "verify the token signature"
 ```
 
 MIT, TypeScript: https://github.com/risshabs22-quantified/contextDiet
@@ -132,7 +132,7 @@ Your AI coding agent is reading your entire repo to fix a one-line JWT bug.
 
 You're paying for every token of that.
 
-I built ContextDiet: AST graph traversal that sends the model *only* the code paths it actually needs. Up to 90% fewer tokens, $0 network overhead. 🧵
+I built ContextDiet: AST graph traversal that sends the model *only* the code paths it actually needs. Up to 99% fewer tokens (measured), $0 network overhead. 🧵
 
 **2/**
 The problem with "repo → prompt" tools (repomix, gitingest, etc.):
@@ -145,7 +145,7 @@ No understanding of what your code *means*. So your auth fix pays to send the bi
 ContextDiet treats your codebase as a graph, not a pile of text.
 
 Pipeline:
-Parser → Dependency Graph → Lexical Seed Ranker → AST Pruner → Markdown Bundle
+Parser → Dependency Graph → Lexical Seed Ranker → Selector + Pruner → Markdown Bundle
 
 Each stage is a pure module. Source in, data out. No hidden state.
 
@@ -162,15 +162,15 @@ Circular deps? `a → b → a` won't infinite-loop. Cycle-safe traversal.
 
 **6/**
 ③ Lexical Seed Ranker
-Your `--focus "Fix JWT verification"` → weighted seed nodes.
+Your `--focus "verify the token signature"` → weighted seed nodes.
 
 Splits camelCase (verifyJWT → [verify, jwt]), strips stop words, scores overlap.
 
 100% local. Deterministic. $0. No embeddings API.
 
 **7/**
-④ AST Pruner
-Walks the graph from the seeds, keeps only *reachable* declarations, slices the rest.
+④ Selector + Pruner
+Walks the graph from the seeds (symbol-level reference closure), keeps only *reachable* declarations, re-emits them verbatim.
 
 ⑤ Bundler
 Dense, delimiter-fenced Markdown + a token-reduction report.
@@ -178,18 +178,21 @@ Dense, delimiter-fenced Markdown + a token-reduction report.
 **8/**
 Real example — a monolith with auth + billing + analytics.
 
-Focus: "Fix JWT verification"
-Kept: index → auth → authMiddleware → jwtUtils → crypto
-Sliced: billing, pdfGenerator, analytics
+Focus: "verify the token signature"
+Kept: authMiddleware → jwtUtils → crypto
+Sliced: index, auth route, billing, pdfGenerator, analytics
 
-Because none of them are reachable from the JWT path. 🎯
+It follows dependencies from the matched code — never callers. 🎯
 
 **9/**
-The numbers on that run:
+The measured numbers on that run:
 
-Raw:        128,400 tokens
-Compressed:  11,900 tokens
-Reduction:      90.7%
+Raw:        9,386 tokens
+Compressed: 2,985 tokens
+Reduction:     68.2%
+
+And a narrow single-symbol task on our own repo:
+30,472 → 302 tokens. **99.0%.**
 
 That's the difference between graph theory and `cat`.
 
@@ -197,7 +200,7 @@ That's the difference between graph theory and `cat`.
 One command:
 
 ```
-npx contextdiet trim ./src --focus "Fix JWT verification"
+npx contextdiet trim ./src --focus "verify the token signature"
 ```
 
 MIT licensed. Strict TypeScript. Fully offline. No API keys, no telemetry.

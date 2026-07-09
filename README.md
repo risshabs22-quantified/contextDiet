@@ -2,7 +2,7 @@
 
 # ContextDiet
 
-### An AST-based token optimizer that slashes AI agent context bloat and drops API costs by up to 90% — with **$0 network overhead**.
+### An AST-based token optimizer that slashes AI agent context bloat — up to **99% measured token reduction**, with **$0 network overhead**.
 
 [![CI](https://github.com/risshabs22-quantified/contextDiet/actions/workflows/ci.yml/badge.svg)](https://github.com/risshabs22-quantified/contextDiet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -18,34 +18,38 @@
 
 ## The 30-Second Pitch
 
-Your AI agent doesn't need your entire repo to fix a JWT bug. It needs `verifyToken`, the middleware that calls it, and the crypto util underneath — and **nothing else**.
+Your AI agent doesn't need your entire repo to fix a JWT bug. It needs the token-handling middleware, `verifyToken` underneath it, and the crypto util they both depend on — and **nothing else**.
 
-Naive context packers dump every byte they can find. ContextDiet parses your code into an **Abstract Syntax Tree**, builds a real **dependency graph**, ranks the symbols that match your task, and traverses *only the reachable code paths*. The result is a dense, surgical Markdown bundle that fits your intent — not your file count.
+Naive context packers dump every byte they can find. ContextDiet parses your code into an **Abstract Syntax Tree**, builds a real **dependency graph**, ranks the symbols that match your task, and keeps *only the reachable code paths*. The result is a dense, surgical Markdown bundle that fits your intent — not your file count.
 
 ```bash
-npx contextdiet trim ./src --focus "Fix JWT verification"
+npx contextdiet trim ./src --focus "verify the token signature"
 ```
 
 The **Markdown bundle streams to stdout** (pipe it straight into a file, your clipboard, or an LLM), while a human-readable summary dashboard is printed to **stderr** — so redirecting stdout gives you a pristine bundle:
 
 ```bash
-npx contextdiet trim ./src --focus "Fix JWT verification" > context.md
+npx contextdiet trim ./src --focus "verify the token signature" > context.md
 ```
+
+Here's a **real, reproducible run** — ContextDiet trimming its own source (`npm run build && node bin/contextdiet.js trim ./src --focus "malformed syntax ParseError"`):
 
 ```
   ContextDiet · trim
   ────────────────────────────────────────────────────
-  focus      Fix JWT verification
-  root       /repo/src
-  seeds      3 matched   ·   kept 5/42 files
+  focus      malformed syntax ParseError
+  root       ./src  (ContextDiet's own engine)
+  seeds      2 matched   ·   kept 2/14 files
   ────────────────────────────────────────────────────
-  original    501.6 KB   ~128,400 tok
-  pruned       46.5 KB    ~11,900 tok
+  original     62.6 KB   ~30,472 tok
+  pruned         616 B      ~302 tok
   ────────────────────────────────────────────────────
-  reduction      90.7% tokens   ✓ >80% target met
-                 90.7% bytes
+  reduction  99.0% tokens   ✓ >80% target met
+             99.0% bytes
   output     (stdout)
 ```
+
+> Compression scales with how precisely your task maps to code: narrow, single-symbol tasks measure up to **99.0%**; broader tasks that legitimately touch more code measure less (e.g. **68.2%** on our auth-monolith fixture — see the example below). All numbers are measured runs, logged in `PROJECT_STATUS.md`.
 
 ---
 
@@ -74,7 +78,7 @@ That's expensive in three ways:
 
 ```bash
 # Zero install — run it directly
-npx contextdiet trim ./src --focus "Fix JWT verification"
+npx contextdiet trim ./src --focus "verify the token signature"
 
 # Or install globally
 npm install -g contextdiet
@@ -101,7 +105,7 @@ ContextDiet is a five-stage pipeline. Each stage is a pure, independently testab
 ```
                          ┌───────────────────────────────────────────────┐
    ./src  ──────────────▶│                  ContextDiet                   │
-   --focus "Fix JWT…"    └───────────────────────────────────────────────┘
+   --focus "verify…"     └───────────────────────────────────────────────┘
                                               │
         ┌─────────────────────────────────────┼─────────────────────────────────────┐
         ▼                                      ▼                                      ▼
@@ -117,13 +121,13 @@ ContextDiet is a five-stage pipeline. Each stage is a pure, independently testab
                                                                              │
         ┌────────────────────────────────────────────────────────────────────┘
         ▼                                            ▼
-┌───────────────────────┐   kept files   ┌──────────────────────────┐
-│   4. AST PRUNER       │───────────────▶│   5. MARKDOWN BUNDLER    │─────▶  stdout  (→ pipe to file)
+┌───────────────────────┐   kept code    ┌──────────────────────────┐
+│  4. SELECT + PRUNE    │───────────────▶│   5. MARKDOWN BUNDLER    │─────▶  stdout  (→ pipe to file)
 │                       │                │                          │        + metrics → stderr
 │ walks the graph from  │                │ fences each kept file    │
-│ the seeds, keeps only │                │ with START/END delimiters│        Raw:        128,400 tok
-│ reachable code paths, │                │ optimized for LLM        │        Compressed:  11,900 tok
-│ slices the rest       │                │ context parsing          │        Reduction:      90.7%
+│ the seeds (reference  │                │ with START/END delimiters│        Raw:         30,472 tok
+│ closure), keeps only  │                │ optimized for LLM        │        Compressed:      302 tok
+│ reachable declarations│                │ context parsing          │        Reduction:       99.0%
 └───────────────────────┘                └──────────────────────────┘
 ```
 
@@ -132,7 +136,7 @@ ContextDiet is a five-stage pipeline. Each stage is a pure, independently testab
 | **1. Parser** | `src/core/parser` | Extracts imports & top-level symbols from each file via a real AST (ast-grep). Never returns a silently-wrong partial tree — surfaces a catchable `ParseError`. |
 | **2. Dependency Graph** | `src/core/graph` | Resolves the import/export edges between symbols. Cycle-safe (`a → b → a` won't loop). |
 | **3. Lexical Seed Ranker** | `src/core/ranker` | Turns your `--focus` string into weighted seed nodes. Strips stop words, splits camelCase, scores overlap. **$0, deterministic, local.** |
-| **4. AST Pruner** | `src/core/pruner` | Traverses the graph from the seeds and keeps only reachable declarations. Everything unreachable is sliced. |
+| **4. Selector + Pruner** | `src/core/graph` · `src/core/pruner` | Walks the dependency graph from the seed symbols (symbol-level reference closure — same-file helpers always follow, so nothing dangles), then re-emits only the surviving declarations, verbatim. |
 | **5. Markdown Bundler** | `src/core/bundler` | Serializes the survivors into a dense, delimiter-fenced stream — plus a `metrics` report proving the reduction. |
 
 ---
@@ -143,19 +147,21 @@ Given a backend where `index.ts` boots Express and mounts **auth**, **billing**,
 
 ```
 src/
-├── index.ts                  ← entry point
-├── routes/auth.ts            ← 🟢 kept
-├── middleware/authMiddleware ← 🟢 kept
-├── utils/jwtUtils.ts         ← 🟢 kept  (the actual JWT logic)
-├── utils/crypto.ts           ← 🟢 kept  (jwtUtils depends on it)
+├── index.ts                  ← 🔴 sliced  (entry point — a dependent, not a dependency)
+├── routes/auth.ts            ← 🔴 sliced  (calls the token code; not needed to understand it)
+├── middleware/authMiddleware ← 🟢 kept    (its token handlers match the focus)
+├── utils/jwtUtils.ts         ← 🟢 kept    (verifyToken and friends)
+├── utils/crypto.ts           ← 🟢 kept    (jwtUtils depends on it)
 ├── routes/billing.ts         ← 🔴 sliced
 ├── utils/pdfGenerator.ts     ← 🔴 sliced
 └── services/analytics.ts     ← 🔴 sliced
 ```
 
-Running `--focus "Fix JWT verification"` follows the chain
-`index → auth → authMiddleware → jwtUtils → crypto`
-and **completely removes** billing, the PDF generator, and analytics — because none of them are reachable from the JWT code path. That's the difference between a text dumper and a graph traversal.
+Running `--focus "verify the token signature"` seeds the symbols that match the task (the middleware's token handlers, `verifyToken`) and keeps their **dependency closure**: `authMiddleware → jwtUtils → crypto` — 3 of 8 files, measured at **9,386 → 2,985 estimated tokens (68.2%)**.
+
+Note the direction: ContextDiet keeps what your focused code **depends on**, never what merely *calls into it*. The entry point and the auth route import the JWT code, but the model doesn't need them to reason about token verification — and billing, the PDF generator, and analytics have zero structural connection to the token path, so they never stand a chance.
+
+Narrower focus, deeper cuts: on ContextDiet's own repo, `--focus "malformed syntax ParseError"` maps to two leaf symbols and measures **99.0%** (30,472 → 302 tokens).
 
 ---
 
