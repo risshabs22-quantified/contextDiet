@@ -2,37 +2,37 @@
 
 # ContextDiet
 
-### An AST-based token optimizer that slashes AI agent context bloat — up to **99% measured token reduction**, with **$0 network overhead**.
+### your AI agent is reading your ENTIRE repo to fix one bug. and you're paying for every single token of that. i fixed it.
 
 [![CI](https://github.com/risshabs22-quantified/contextDiet/actions/workflows/ci.yml/badge.svg)](https://github.com/risshabs22-quantified/contextDiet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](#-contributing)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](#wanna-hack-on-it)
 
-**Stop paying to send dead code to your LLM.**
+**stop paying LLMs to read your dead code lol**
 
 </div>
 
 ---
 
-## The 30-Second Pitch
+## ok so what is this
 
-Your AI agent doesn't need your entire repo to fix a JWT bug. It needs the token-handling middleware, `verifyToken` underneath it, and the crypto util they both depend on — and **nothing else**.
+basically: you're fixing a JWT bug. your AI agent does NOT need to see your billing module, your pdf generator, or your analytics service to fix a JWT bug. but every "repo to prompt" tool out there is literally just `cat` with extra steps — it dumps your whole repo into the context window and your wallet takes the hit.
 
-Naive context packers dump every byte they can find. ContextDiet parses your code into an **Abstract Syntax Tree**, builds a real **dependency graph**, ranks the symbols that match your task, and keeps *only the reachable code paths*. The result is a dense, surgical Markdown bundle that fits your intent — not your file count.
+ContextDiet actually *reads* your code. like properly — it parses it into an AST (a real syntax tree, not regex, we don't do regex crimes here), builds a dependency graph of what imports what, figures out which symbols match the thing you're trying to do, and then keeps ONLY the code that's actually reachable from there. everything else? gone. sliced. it never existed.
 
 ```bash
 npx contextdiet-cli trim ./src --focus "verify the token signature"
 ```
 
-The **Markdown bundle streams to stdout** (pipe it straight into a file, your clipboard, or an LLM), while a human-readable summary dashboard is printed to **stderr** — so redirecting stdout gives you a pristine bundle:
+the markdown bundle goes to **stdout** (pipe it wherever — a file, your clipboard, straight into an LLM), and the pretty stats dashboard goes to **stderr**, so this gives you a totally clean file:
 
 ```bash
 npx contextdiet-cli trim ./src --focus "verify the token signature" > context.md
 ```
 
-Here's a **real, reproducible run** — ContextDiet trimming its own source (`npm run build && node bin/contextdiet.js trim ./src --focus "malformed syntax ParseError"`):
+and here's a **100% real run** of ContextDiet eating its own source code (`npm run build && node bin/contextdiet.js trim ./src --focus "malformed syntax ParseError"` — try it yourself, it's reproducible):
 
 ```
   ContextDiet · trim
@@ -49,58 +49,55 @@ Here's a **real, reproducible run** — ContextDiet trimming its own source (`np
   output     (stdout)
 ```
 
-> Compression scales with how precisely your task maps to code: narrow, single-symbol tasks measure up to **99.0%**; broader tasks that legitimately touch more code measure less (e.g. **68.2%** on our auth-monolith fixture — see the example below). All numbers are measured runs, logged in `PROJECT_STATUS.md`.
+> yes that says **99.0%**. no i didn't make it up — every number in this readme is from an actual measured run, receipts are in `PROJECT_STATUS.md`. narrow focused tasks get you up to 99%, broader tasks that genuinely touch more code get less (like 68.2% on the example further down). the more precisely you describe your task, the harder it cuts. that's just how graphs work.
 
 ---
 
-## Why ContextDiet?
+## why not just use repomix or whatever
 
-Most "repo-to-prompt" tools (think `repomix`, `gitingest`, and friends) are **text dumpers**. They walk your filesystem, concatenate files, and maybe strip comments. That's it. They have no idea what your code *means*, so they send everything and let you (and your wallet) sort it out.
+because those are **text dumpers**. they walk your folders, glue the files together, maybe strip some comments if they're feeling fancy. they have zero idea what your code *means*, so they send all of it and let you sort it out. with your money.
 
-That's expensive in three ways:
-
-| | Naive text packers | **ContextDiet** |
+| | text dumpers | **ContextDiet** |
 |---|---|---|
-| **Unit of understanding** | Files & bytes | AST symbols & call graph |
-| **What gets included** | Everything it can glob | Only code reachable from your task |
-| **Dead code** | Shipped to the model | Sliced away |
-| **Cost model** | You pay for the whole repo | You pay for the relevant slice |
-| **Circular imports** | Duplicated / mangled | Cycle-safe graph traversal |
-| **Re-exports & aliases** | Often broken by regex | Resolved via real AST |
-| **Network / API calls** | Sometimes (embeddings) | **Zero. Fully local.** |
-| **Determinism** | Order-dependent | Byte-identical every run |
+| what it understands | files & bytes | AST symbols & the actual graph |
+| what gets sent | literally everything | only code reachable from your task |
+| dead code | shipped to the model 💸 | sliced 🔪 |
+| circular imports | duplicated / mangled | handled, `a → b → a` won't loop |
+| re-exports & aliases | regex breaks them quietly | resolved via real AST |
+| network / API calls | sometimes (embeddings 🤢) | **zero. runs fully on your machine.** |
+| same input twice | order-dependent chaos | byte-identical output every time |
 
-> **The core insight:** LLM cost is billed per token, and most tokens in a naive dump are *irrelevant*. A billing module, a PDF generator, and an analytics service have **zero structural connection** to your auth bug — so why pay to send them? ContextDiet answers "what does the model actually need to see?" with graph theory, not guesswork.
+> the whole insight is stupidly simple: LLMs bill per token, and most tokens in a repo dump are irrelevant to your task. your billing module has ZERO structural connection to your auth bug. so why are you paying to send it?? ContextDiet answers "what does the model actually need to see" with graph theory instead of vibes.
 
 ---
 
-## Quick Start
+## how do i use it
 
 ```bash
-# Zero install — run it directly
+# zero install, just run it
 npx contextdiet-cli trim ./src --focus "verify the token signature"
 
-# Or install globally (the installed command keeps the short name)
+# or install it globally (the command you get is just `contextdiet`, short and clean)
 npm install -g contextdiet-cli
 contextdiet trim ./src --focus "add rate limiting to the login route"
 ```
 
 **`contextdiet trim <path> [options]`**
 
-| Flag | Description | Default |
+| flag | what it does | default |
 |---|---|---|
-| `<path>` | Root directory to analyze. | *(required)* |
-| `-f, --focus <query>` | Natural-language description of your task. Drives seed selection. | *(required)* |
-| `--hops <n>` | Dependency-graph traversal depth from the seed nodes. | `2` |
-| `-o, --output <file>` | Write the bundle to a file instead of stdout. | *(stdout)* |
+| `<path>` | the folder to analyze | *(required)* |
+| `-f, --focus <query>` | describe your task in normal words. this picks the seeds. | *(required)* |
+| `--hops <n>` | how many dependency-graph jumps out from the seeds | `2` |
+| `-o, --output <file>` | write the bundle to a file instead of stdout | *(stdout)* |
 
-> The bundle is written to **stdout** and the summary dashboard to **stderr**, so `contextdiet trim … > bundle.md` yields a clean file with no dashboard noise mixed in.
+> bundle → stdout, dashboard → stderr. so `contextdiet trim … > bundle.md` gives you a clean file with zero dashboard noise in it. you're welcome.
 
 ---
 
-## How It Works
+## how it works (the nerdy part)
 
-ContextDiet is a five-stage pipeline. Each stage is a pure, independently testable module — source in, data out, no hidden state.
+it's a five-stage pipeline. every stage is a pure module — source in, data out, no hidden state, all independently tested. i spent way too long on this diagram so you WILL look at it:
 
 ```
                          ┌───────────────────────────────────────────────┐
@@ -131,76 +128,72 @@ ContextDiet is a five-stage pipeline. Each stage is a pure, independently testab
 └───────────────────────┘                └──────────────────────────┘
 ```
 
-| Stage | Module | Responsibility |
+| stage | where it lives | what it does |
 |---|---|---|
-| **1. Parser** | `src/core/parser` | Extracts imports & top-level symbols from each file via a real AST (ast-grep). Never returns a silently-wrong partial tree — surfaces a catchable `ParseError`. |
-| **2. Dependency Graph** | `src/core/graph` | Resolves the import/export edges between symbols. Cycle-safe (`a → b → a` won't loop). |
-| **3. Lexical Seed Ranker** | `src/core/ranker` | Turns your `--focus` string into weighted seed nodes. Strips stop words, splits camelCase, scores overlap. **$0, deterministic, local.** |
-| **4. Selector + Pruner** | `src/core/graph` · `src/core/pruner` | Walks the dependency graph from the seed symbols (symbol-level reference closure — same-file helpers always follow, so nothing dangles), then re-emits only the surviving declarations, verbatim. |
-| **5. Markdown Bundler** | `src/core/bundler` | Serializes the survivors into a dense, delimiter-fenced stream — plus a `metrics` report proving the reduction. |
+| **1. parser** | `src/core/parser` | pulls imports & top-level symbols out of every file with a real AST (ast-grep). if your file has broken syntax it throws a catchable `ParseError` instead of silently handing you a half-wrong tree like some tools i could mention |
+| **2. dependency graph** | `src/core/graph` | maps who imports who, including re-exports and aliases. cycle-safe, so circular imports can't infinite-loop it |
+| **3. lexical seed ranker** | `src/core/ranker` | turns your `--focus` sentence into weighted seed symbols. strips filler words, splits camelCase (`verifyJWT → verify, jwt`), scores the overlap. costs $0, no API, same answer every time |
+| **4. selector + pruner** | `src/core/graph` · `src/core/pruner` | walks the graph outward from the seeds and keeps the reference closure (same-file helpers always come along so nothing dangles), then re-emits the survivors *verbatim* — it never rewrites your code |
+| **5. markdown bundler** | `src/core/bundler` | packs the survivors into one dense delimiter-fenced stream + a metrics report proving how much it saved you |
 
 ---
 
-## Example: The Monolith Auth App
+## example: the monolith test app
 
-Given a backend where `index.ts` boots Express and mounts **auth**, **billing**, and **analytics** routes:
+imagine a backend where `index.ts` boots express and mounts **auth**, **billing**, and **analytics**:
 
 ```
 src/
-├── index.ts                  ← 🔴 sliced  (entry point — a dependent, not a dependency)
-├── routes/auth.ts            ← 🔴 sliced  (calls the token code; not needed to understand it)
+├── index.ts                  ← 🔴 sliced  (it's a dependent, not a dependency)
+├── routes/auth.ts            ← 🔴 sliced  (calls the token code, but the model doesn't need it)
 ├── middleware/authMiddleware ← 🟢 kept    (its token handlers match the focus)
-├── utils/jwtUtils.ts         ← 🟢 kept    (verifyToken and friends)
-├── utils/crypto.ts           ← 🟢 kept    (jwtUtils depends on it)
+├── utils/jwtUtils.ts         ← 🟢 kept    (verifyToken and the gang)
+├── utils/crypto.ts           ← 🟢 kept    (jwtUtils needs it)
 ├── routes/billing.ts         ← 🔴 sliced
 ├── utils/pdfGenerator.ts     ← 🔴 sliced
 └── services/analytics.ts     ← 🔴 sliced
 ```
 
-Running `--focus "verify the token signature"` seeds the symbols that match the task (the middleware's token handlers, `verifyToken`) and keeps their **dependency closure**: `authMiddleware → jwtUtils → crypto` — 3 of 8 files, measured at **9,386 → 2,985 estimated tokens (68.2%)**.
+run `--focus "verify the token signature"` and it seeds the symbols matching the task (the middleware's token handlers, `verifyToken`) and keeps their **dependency chain**: `authMiddleware → jwtUtils → crypto`. that's 3 of 8 files, measured at **9,386 → 2,985 tokens (68.2%)**.
 
-Note the direction: ContextDiet keeps what your focused code **depends on**, never what merely *calls into it*. The entry point and the auth route import the JWT code, but the model doesn't need them to reason about token verification — and billing, the PDF generator, and analytics have zero structural connection to the token path, so they never stand a chance.
+the direction matters and it's the whole trick: ContextDiet keeps what your focused code **depends on**, never what just *calls into it*. the entry point imports the JWT stuff, sure — but you don't need the entry point to understand token verification. and billing / pdf / analytics have zero structural connection to the token path so they never even had a chance.
 
-Narrower focus, deeper cuts: on ContextDiet's own repo, `--focus "malformed syntax ParseError"` maps to two leaf symbols and measures **99.0%** (30,472 → 302 tokens).
+narrower focus = deeper cuts: point it at ContextDiet's own repo with `--focus "malformed syntax ParseError"` and it finds exactly two leaf symbols → **99.0%** (30,472 → 302 tokens). fr.
 
 ---
 
-## Local Development
+## wanna hack on it
 
 ```bash
 git clone https://github.com/risshabs22-quantified/contextDiet.git
 cd contextDiet
 npm install
 
-npm run typecheck   # tsc --noEmit, strict mode
-npm test            # full Vitest suite
-npm run build       # compile to dist/
+npm run typecheck   # strict TS, no implicit any, no mercy
+npm test            # the whole vitest suite
+npm run build       # compiles to dist/
 ```
 
-**Requirements:** Node.js `>= 20`.
+needs Node `>= 20`. that's it.
+
+PRs are extremely welcome, just keep the vibe:
+
+1. **fork it**, branch it (`git checkout -b feat/my-cool-thing`)
+2. **keep it strict** — everything has to pass `npm run typecheck` and `npm test`, no exceptions, the CI will catch you
+3. **tests first** — every new thing ships with vitest coverage, copy the style in `tests/unit`
+4. **stay modular** — every pipeline stage is a pure module behind an interface. new parser backends (tree-sitter, SWC) should slot in without touching anything else
+5. **open the PR** — CI runs on every push. green check = ready
+
+good first issues if you want in: more language parsers, a smarter ranker (embeddings as an *option*, never a requirement), more bundle formats (JSON, XML).
 
 ---
 
-## Contributing
+## license
 
-Contributions are welcome and appreciated — ContextDiet is built to be extended.
-
-1. **Fork** the repo and create a feature branch (`git checkout -b feat/my-improvement`).
-2. **Keep it strict.** All code must pass `npm run typecheck` (strict TypeScript, no implicit `any`) and `npm test`.
-3. **Test first.** Every new capability ships with Vitest coverage — see `tests/unit` for the style.
-4. **Stay modular.** Each pipeline stage is a pure module; new backends (tree-sitter, SWC) should slot in behind the existing interfaces without touching callers.
-5. **Open a PR.** CI runs typecheck + the full test suite on every push and pull request. Green check = ready for review.
-
-Good first issues: additional language parsers, a smarter ranker (embeddings-optional), and richer bundle formats (JSON, XML).
-
----
-
-## License
-
-Released under the **[MIT License](./LICENSE)**. Use it, fork it, ship it, sell it — no strings attached. Copyright © 2026 the ContextDiet contributors.
+**[MIT](./LICENSE)**. use it, fork it, ship it, sell it, i genuinely do not mind. © 2026 the ContextDiet contributors.
 
 <div align="center">
 
-**If ContextDiet saves you tokens, [give it a ⭐](https://github.com/risshabs22-quantified/contextDiet) — it genuinely helps.**
+**if this saved you tokens, [drop a ⭐](https://github.com/risshabs22-quantified/contextDiet) — it costs you nothing and it makes my whole day, fr**
 
 </div>
