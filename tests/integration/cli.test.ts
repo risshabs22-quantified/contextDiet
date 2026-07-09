@@ -104,4 +104,13 @@ describe('contextdiet CLI — end to end', () => {
     const { code } = await runCli(['trim', FIXTURE]);
     expect(code).not.toBe(0);
   }, 30_000);
+
+  it('reports the package.json version (no drift between the two)', async () => {
+    const pkg = JSON.parse(
+      await fs.readFile(path.join(REPO, 'package.json'), 'utf8'),
+    ) as { version: string };
+    const { stdout, code } = await runCli(['--version']);
+    expect(code).toBe(0);
+    expect(stdout.trim()).toBe(pkg.version);
+  }, 30_000);
 });

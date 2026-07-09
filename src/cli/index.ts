@@ -9,7 +9,7 @@
  */
 
 import { Command } from 'commander';
-import { promises as fs } from 'node:fs';
+import { promises as fs, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { trim } from '../core/pipeline.js';
 import type { TrimResult } from '../core/pipeline.js';
@@ -20,12 +20,19 @@ interface TrimCliOptions {
   readonly output?: string;
 }
 
+// Single source of truth for the version: package.json sits two levels above
+// both src/cli/ and the compiled dist/cli/, so the same relative URL works for
+// either entry point.
+const { version } = JSON.parse(
+  readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+) as { version: string };
+
 const program = new Command();
 
 program
   .name('contextdiet')
   .description('AST-based token optimizer — trim a codebase to just what an AI agent needs.')
-  .version('0.1.0');
+  .version(version);
 
 program
   .command('trim')
