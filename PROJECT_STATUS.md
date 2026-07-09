@@ -11,8 +11,8 @@
 
 - **Project:** ContextDiet — AST-based token optimizer for AI agents
 - **Repo root (absolute):** `/Users/risshabs.22/Documents/GitHub/contextDiet`
-- **Last major update:** 2026-07-08 — **Ultracode final audit** (20 agents, 5 dimensions, adversarial verify): 15/15 confirmed findings fixed; npm tarball verified by a real install
-- **Current stage:** **LAUNCH-READY.** 123/123 tests, 0 type errors, tarball smoke-tested end-to-end (`npm pack` → install → run), docs 100% ledger-backed. Awaiting `git push`.
+- **Last major update:** 2026-07-09 — **🚀 SHIPPED.** `contextdiet-cli@0.1.0` published to npm (2026-07-09T04:15Z) and verified by a clean-room `npx` run from the registry; GitHub `main` + tag `v0.1.0` live; CI green on Node 20/22
+- **Current stage:** **LIVE.** GitHub: `risshabs22-quantified/contextDiet` · npm: `contextdiet-cli` (`npx contextdiet-cli trim …`). Remaining: optional repo polish (topics/Release) + posting LAUNCH_COPY. Publish-trap history: ADR-017/018/020/021.
 
 ---
 
@@ -493,4 +493,5 @@ Timestamped session checkpoints appended by `.claude/hooks/update-status.sh`.
 - 2026-07-09T03:59:50Z — session checkpoint recorded
 - 2026-07-09T04:02:50Z — session checkpoint recorded
 - 2026-07-09T04:06:53Z — session checkpoint recorded
+- 2026-07-09T04:12:38Z — session checkpoint recorded
 <!-- AUTO-LOG:END -->
