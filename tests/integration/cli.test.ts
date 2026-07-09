@@ -105,6 +105,36 @@ describe('contextdiet CLI — end to end', () => {
     expect(code).not.toBe(0);
   }, 30_000);
 
+  it('fails fast with a clear error when the target path does not exist', async () => {
+    const missing = path.join(os.tmpdir(), 'contextdiet-definitely-not-here');
+    const { stdout, stderr, code } = await runCli(['trim', missing, '--focus', 'jwt']);
+    expect(code).not.toBe(0);
+    expect(stderr).toContain('path does not exist');
+    expect(stdout.trim()).toBe('');
+  }, 30_000);
+
+  it('fails fast with a clear error when the target path is a file, not a directory', async () => {
+    const file = path.join(FIXTURE, 'index.ts');
+    const { stderr, code } = await runCli(['trim', file, '--focus', 'jwt']);
+    expect(code).not.toBe(0);
+    expect(stderr).toContain('not a directory');
+  }, 30_000);
+
+  it('surfaces a clear error when the output file cannot be written', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'contextdiet-cli-'));
+    try {
+      // Point -o at a path whose parent is a FILE, so the write must fail.
+      const blocker = path.join(dir, 'blocker');
+      await fs.writeFile(blocker, 'not a directory', 'utf8');
+      const outFile = path.join(blocker, 'bundle.md');
+      const { stderr, code } = await runCli(['trim', FIXTURE, '--focus', 'jwt', '-o', outFile]);
+      expect(code).not.toBe(0);
+      expect(stderr).toContain('cannot write output file');
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
   it('reports the package.json version (no drift between the two)', async () => {
     const pkg = JSON.parse(
       await fs.readFile(path.join(REPO, 'package.json'), 'utf8'),

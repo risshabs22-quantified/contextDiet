@@ -49,6 +49,7 @@ program
       }
 
       const root = path.resolve(targetPath);
+      await assertReadableDirectory(root);
       const result = await trim(root, options.focus, { hops });
 
       if (result.totalFiles === 0) {
@@ -59,7 +60,13 @@ program
 
       const outputPath = options.output === undefined ? null : path.resolve(options.output);
       if (outputPath !== null) {
-        await fs.writeFile(outputPath, ensureTrailingNewline(result.bundle), 'utf8');
+        try {
+          await fs.writeFile(outputPath, ensureTrailingNewline(result.bundle), 'utf8');
+        } catch (error) {
+          throw new Error(
+            `cannot write output file "${outputPath}": ${(error as Error).message}`,
+          );
+        }
       } else {
         process.stdout.write(ensureTrailingNewline(result.bundle));
       }
@@ -115,6 +122,19 @@ function printDashboard(result: TrimResult, outputPath: string | null): void {
   ];
 
   process.stderr.write(lines.join('\n') + '\n');
+}
+
+/** Fail fast with a human error instead of a silent "no source files found". */
+async function assertReadableDirectory(root: string): Promise<void> {
+  let stat;
+  try {
+    stat = await fs.stat(root);
+  } catch {
+    throw new Error(`path does not exist: "${root}"`);
+  }
+  if (!stat.isDirectory()) {
+    throw new Error(`path is not a directory: "${root}"`);
+  }
 }
 
 function ensureTrailingNewline(text: string): string {
