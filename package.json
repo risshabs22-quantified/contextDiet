@@ -1,0 +1,37 @@
+{
+  "name": "contextdiet",
+  "version": "0.1.0",
+  "description": "AST-based token optimizer that trims codebase context for AI agents to eliminate context-window bloat and cut LLM API costs.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "ast",
+    "llm",
+    "context",
+    "tokens",
+    "ai-agents",
+    "ast-grep",
+    "cli"
+  ],
+  "bin": {
+    "contextdiet": "./bin/contextdiet.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ast-grep/napi": "^0.44.1",
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

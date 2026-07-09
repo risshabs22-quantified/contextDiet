@@ -1,0 +1,55 @@
+# ---------------------------------------------------------------------------
+# ContextDiet .gitignore
+# Goal: keep funded API keys, local caches, and build artifacts un-clonable.
+# ---------------------------------------------------------------------------
+
+# --- Secrets & local environment (NEVER commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+.contextdiet.local.json
+
+# --- Node.js ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# --- Build / compiler artifacts ---
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# --- Native / ast-grep build artifacts ---
+*.node
+.ast-grep/
+sgconfig.local.yml
+
+# --- Caches ---
+.cache/
+.contextdiet-cache/
+.vitest/
+coverage/
+*.log
+logs/
+
+# --- Python (venvs / bytecode — blocked per environment policy) ---
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

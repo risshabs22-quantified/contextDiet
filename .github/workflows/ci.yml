@@ -1,0 +1,49 @@
+name: CI
+
+# Guard the main branch: every push and every pull request must pass a strict
+# type-check and the full Vitest suite before it can be merged.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref so contributors get fast feedback and
+# we don't burn CI minutes on stale commits.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Type-check & Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test the supported LTS range (package.json engines: ">=20").
+        node-version: ['20', '22']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          # Built-in npm dependency caching keyed on package-lock.json.
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check (tsc --noEmit, strict)
+        run: npm run typecheck
+
+      - name: Run test suite (Vitest)
+        run: npm test
