@@ -60,7 +60,7 @@ what merely calls into it — all docs/marketing must use this framing (ADR-019)
 | CLI framework | `commander` (`^15`) |
 | Test runner | `vitest` (`^4`) |
 | Module resolution | `NodeNext` (relative imports use explicit `.js`) |
-| Distribution | npm tarball **verified**: `files: ["dist","bin"]` allowlist, `prepublishOnly` gate (typecheck+test+build), `exports`/`types` for library use; real tarball-install smoke test green |
+| Distribution | npm package **`context-diet`** (the name `contextdiet` is squatted by a third party — ADR-020; bin command stays `contextdiet`); tarball **verified**: `files: ["dist","bin"]` allowlist, `prepublishOnly` gate, `exports`/`types` for library use; real tarball-install smoke test green |
 
 **Absolute path dependencies**
 
@@ -371,6 +371,19 @@ README/LAUNCH_COPY unless it has a row in §6; direction language follows the
 canon. The middleware example is honest because the middleware *lexically
 matches* a token-focused query and seeds itself — not because callers are traversed.
 
+**ADR-020 — npm package name: `context-diet` (the unscoped brand word is squatted).** *(2026-07-08)*
+Pre-push registry check found `contextdiet@0.2.0` already published (2026-05-19,
+maintainer `soilair`, repo Tehlikeli107/contextdiet) — a *different* project with
+a near-identical pitch. Publishing was impossible and, worse, every `npx
+contextdiet` line in our copy would have executed the third-party package.
+Renamed the npm package to **`context-diet`** (verified free) while the **bin
+command stays `contextdiet`** — npm runs a package's single bin regardless of
+name, so `npx context-diet` works and `npm i -g context-diet` still installs a
+`contextdiet` command; the GitHub repo name is unaffected. All ~15 command
+strings in README/LAUNCH_COPY updated. **Rejected:** scoped `@user/contextdiet`
+(clunkier npx lines), `contextdiet-cli` (undersells the library entry point),
+skipping npm (all launch copy leans on the one-line npx demo).
+
 ---
 
 ## 6. Efficiency Metrics Ledger
@@ -455,4 +468,5 @@ Timestamped session checkpoints appended by `.claude/hooks/update-status.sh`.
 - 2026-07-08T23:08:22Z — session checkpoint recorded
 - 2026-07-09T02:39:59Z — session checkpoint recorded
 - 2026-07-09T03:31:53Z — session checkpoint recorded
+- 2026-07-09T03:40:10Z — session checkpoint recorded
 <!-- AUTO-LOG:END -->

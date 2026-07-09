@@ -1,5 +1,5 @@
 {
-  "name": "contextdiet",
+  "name": "context-diet",
   "version": "0.1.0",
   "description": "AST-based token optimizer that trims codebase context for AI agents to eliminate context-window bloat and cut LLM API costs.",
   "type": "module",
