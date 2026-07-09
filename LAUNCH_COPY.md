@@ -33,7 +33,7 @@ The pipeline is five pure stages:
 The thing I care most about: it's **zero network overhead**. No embeddings API, no remote reranker, no telemetry. It runs entirely on your machine and produces byte-identical output every run, which matters if you're wiring it into CI or a deterministic agent loop.
 
 ```
-npx context-diet trim ./src --focus "verify the token signature"
+npx contextdiet-cli trim ./src --focus "verify the token signature"
 ```
 
 Measured numbers: on our monolith-auth fixture, that focus keeps the `authMiddleware → jwtUtils → crypto` dependency chain (3 of 8 files) and drops the entry point, billing, PDF, and analytics entirely — 9,386 → 2,985 estimated tokens (**68.2%**). A narrow, single-symbol focus on ContextDiet's own repo measures **99.0%** (30,472 → 302). One design choice worth knowing: the selector follows *dependencies* from the matched symbols, never callers — that's what keeps bundles small.
@@ -70,7 +70,7 @@ ContextDiet is a TypeScript CLI that does it properly:
 Stack notes for this sub: two runtime deps (`@ast-grep/napi` native bindings + `commander`), strict `tsconfig` (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`), pure ESM (NodeNext), Node ≥20, Vitest, GitHub Actions CI on Node 20 + 22. Every pipeline stage is a pure module behind an interface, so swapping the AST backend later doesn't touch callers.
 
 ```
-npx context-diet trim ./src --focus "add rate limiting to the login route"
+npx contextdiet-cli trim ./src --focus "add rate limiting to the login route"
 ```
 
 Repo (MIT): https://github.com/risshabs22-quantified/contextDiet — feedback on the architecture very welcome.
@@ -98,7 +98,7 @@ ContextDiet is fully offline. Given a task like `--focus "verify the token signa
 No network, no telemetry, no API keys. Measured on our auth-monolith fixture it cut **68%** of tokens on a broad query and **99%** on a narrow one — everything not structurally reachable from the code path you're working on gets sliced, which means more of your precious local context goes to *relevant* code.
 
 ```
-npx context-diet trim ./src --focus "verify the token signature"
+npx contextdiet-cli trim ./src --focus "verify the token signature"
 ```
 
 MIT, TypeScript: https://github.com/risshabs22-quantified/contextDiet
@@ -200,7 +200,7 @@ That's the difference between graph theory and `cat`.
 One command:
 
 ```
-npx context-diet trim ./src --focus "verify the token signature"
+npx contextdiet-cli trim ./src --focus "verify the token signature"
 ```
 
 MIT licensed. Strict TypeScript. Fully offline. No API keys, no telemetry.

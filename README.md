@@ -23,13 +23,13 @@ Your AI agent doesn't need your entire repo to fix a JWT bug. It needs the token
 Naive context packers dump every byte they can find. ContextDiet parses your code into an **Abstract Syntax Tree**, builds a real **dependency graph**, ranks the symbols that match your task, and keeps *only the reachable code paths*. The result is a dense, surgical Markdown bundle that fits your intent — not your file count.
 
 ```bash
-npx context-diet trim ./src --focus "verify the token signature"
+npx contextdiet-cli trim ./src --focus "verify the token signature"
 ```
 
 The **Markdown bundle streams to stdout** (pipe it straight into a file, your clipboard, or an LLM), while a human-readable summary dashboard is printed to **stderr** — so redirecting stdout gives you a pristine bundle:
 
 ```bash
-npx context-diet trim ./src --focus "verify the token signature" > context.md
+npx contextdiet-cli trim ./src --focus "verify the token signature" > context.md
 ```
 
 Here's a **real, reproducible run** — ContextDiet trimming its own source (`npm run build && node bin/contextdiet.js trim ./src --focus "malformed syntax ParseError"`):
@@ -78,10 +78,10 @@ That's expensive in three ways:
 
 ```bash
 # Zero install — run it directly
-npx context-diet trim ./src --focus "verify the token signature"
+npx contextdiet-cli trim ./src --focus "verify the token signature"
 
 # Or install globally (the installed command keeps the short name)
-npm install -g context-diet
+npm install -g contextdiet-cli
 contextdiet trim ./src --focus "add rate limiting to the login route"
 ```
 

@@ -60,7 +60,7 @@ what merely calls into it — all docs/marketing must use this framing (ADR-019)
 | CLI framework | `commander` (`^15`) |
 | Test runner | `vitest` (`^4`) |
 | Module resolution | `NodeNext` (relative imports use explicit `.js`) |
-| Distribution | npm package **`context-diet`** (the name `contextdiet` is squatted by a third party — ADR-020; bin command stays `contextdiet`); tarball **verified**: `files: ["dist","bin"]` allowlist, `prepublishOnly` gate, `exports`/`types` for library use; real tarball-install smoke test green |
+| Distribution | npm package **`contextdiet-cli`** (`contextdiet` is squatted — ADR-020; `context-diet` hard-blocked by npm's punctuation-similarity rule — ADR-021; bin command stays `contextdiet`); tarball **verified**: `files: ["dist","bin"]` allowlist, `prepublishOnly` gate, `exports`/`types` for library use; real tarball-install smoke test green |
 
 **Absolute path dependencies**
 
@@ -383,6 +383,23 @@ name, so `npx context-diet` works and `npm i -g context-diet` still installs a
 strings in README/LAUNCH_COPY updated. **Rejected:** scoped `@user/contextdiet`
 (clunkier npx lines), `contextdiet-cli` (undersells the library entry point),
 skipping npm (all launch copy leans on the one-line npx demo).
+**Superseded by ADR-021** — the registry rejected `context-diet` at publish time.
+
+**ADR-021 — Final npm name: `contextdiet-cli` (punctuation-similarity rule blocks `context-diet`).** *(2026-07-09)*
+The live publish of `context-diet` failed with `E403: Package name too similar to
+existing package contextdiet`. npm's moniker rule blocks any unscoped name whose
+punctuation-stripped form collides with an existing package — `context-diet`
+normalizes to `contextdiet`, so it can never publish; ADR-020's choice was
+unpublishable in practice. Renamed to **`contextdiet-cli`**: normalizes to
+`contextdietcli` (verified free along with the target name itself), so the rule
+deterministically passes. Bin command remains `contextdiet` (`npx contextdiet-cli`
+runs the single bin; `npm i -g contextdiet-cli` installs a `contextdiet` command).
+Two npm-side publish traps were also burned down en route: mandatory 2FA
+enrollment (account-level), and npm 11's destructive publish auto-correct that
+strips `./`-prefixed bin paths (fixed via `npm pkg fix`, see commit `2304553`).
+**Rejected:** `@risshabs22-quantified/context-diet` (npm's own suggestion —
+guaranteed but clunky npx lines and weaker discoverability), another
+brand rename (repo/brand stay ContextDiet; only the registry name carries the suffix).
 
 ---
 
@@ -473,4 +490,7 @@ Timestamped session checkpoints appended by `.claude/hooks/update-status.sh`.
 - 2026-07-09T03:53:51Z — session checkpoint recorded
 - 2026-07-09T03:58:49Z — session checkpoint recorded
 - 2026-07-09T03:59:07Z — session checkpoint recorded
+- 2026-07-09T03:59:50Z — session checkpoint recorded
+- 2026-07-09T04:02:50Z — session checkpoint recorded
+- 2026-07-09T04:06:53Z — session checkpoint recorded
 <!-- AUTO-LOG:END -->
