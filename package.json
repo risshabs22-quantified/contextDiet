@@ -23,7 +23,7 @@
     "url": "https://github.com/risshabs22-quantified/contextDiet/issues"
   },
   "bin": {
-    "contextdiet": "./bin/contextdiet.js"
+    "contextdiet": "bin/contextdiet.js"
   },
   "main": "./dist/core/pipeline.js",
   "types": "./dist/core/pipeline.d.ts",
