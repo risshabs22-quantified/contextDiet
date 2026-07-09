@@ -49,7 +49,7 @@ and here's a **100% real run** of ContextDiet eating its own source code (`npm r
   output     (stdout)
 ```
 
-> yes that says **99.0%**. no i didn't make it up — every number in this readme is from an actual measured run, receipts are in `PROJECT_STATUS.md`. narrow focused tasks get you up to 99%, broader tasks that genuinely touch more code get less (like 68.2% on the example further down). the more precisely you describe your task, the harder it cuts. that's just how graphs work.
+> yes that says **99.0%**. no i didn't make it up — every number in this readme is from an actual measured run, receipts are in [`BENCHMARKS.md`](./BENCHMARKS.md). narrow focused tasks get you up to 99%, broader tasks that genuinely touch more code get less (like 68.2% on the example further down). the more precisely you describe your task, the harder it cuts. that's just how graphs work.
 
 ---
 

@@ -48,6 +48,11 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
+# --- Personal working notes (not part of the published project) ---
+PROJECT_STATUS.md
+LAUNCH_COPY.md
+.claude/
+
 # --- OS / editor cruft ---
 .DS_Store
 Thumbs.db
